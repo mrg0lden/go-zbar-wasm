@@ -36,9 +36,20 @@ func Test_E2E(t *testing.T) {
 
 	img := must(png.Decode(&buf))
 
-	s := zbar.NewScanner()
-	res, err := s.ReadAll(img)
+	res, err := zbar.ReadAll(img)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("Hello, world"), res[0])
+
+	res = [][]byte{{}}
+	r, err := zbar.Read(img)
+	assert.NoError(t, err)
+	defer r.Close()
+
+	for r.Next() {
+		res[0], err = io.ReadAll(r)
+	}
+
+	assert.NoError(t, err)
+	assert.Equal(t, [][]byte{[]byte("Hello, world")}, res)
 
 }
