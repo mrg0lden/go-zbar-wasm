@@ -14,7 +14,7 @@ import (
 var (
 	//go:embed zbar.wasm
 	zbarWasm     []byte
-	zbarCompiled wazero.CompiledCode
+	zbarCompiled wazero.CompiledModule
 	ctx          = context.Background()
 	r            = wazero.NewRuntimeWithConfig(wazero.NewRuntimeConfigJIT())
 	pool         = sync.Pool{New: func() any { return NewScanner() }}
@@ -25,7 +25,7 @@ func init() {
 	must(r.NewModuleBuilder("env").
 		ExportFunction("emscripten_notify_memory_growth", func(int32) {}).
 		Instantiate(ctx))
-	zbarCompiled = must(r.CompileModule(ctx, zbarWasm))
+	zbarCompiled = must(r.CompileModule(ctx, zbarWasm, wazero.NewCompileConfig()))
 }
 
 func ReadAll(img image.Image) ([][]byte, error) {
