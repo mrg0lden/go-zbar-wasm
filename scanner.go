@@ -68,6 +68,9 @@ func (s *Scanner) ReadAll(img image.Image) ([][]byte, error) {
 		symbol, next = symbol.next()
 	}
 
+	s.mod.ExportedFunction("Image_destroy").
+		Call(ctx, uint64(zbarImg.ptr))
+
 	return data, nil
 
 }
@@ -227,7 +230,7 @@ func (r *Reader) Close() error {
 	}
 	// zbar will call free on the buffer
 	// module.c:55:44
-	r.mod.ExportedFunction("Image_destory").
+	r.mod.ExportedFunction("Image_destroy").
 		Call(ctx, uint64(r.img.ptr))
 	r.img.ptr = 0
 	return nil
