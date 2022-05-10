@@ -29,6 +29,9 @@ func (nopCloser) Close() error {
 }
 
 func Test_E2E(t *testing.T) {
+	zbar.NewScanner()
+	zbar.NewScanner()
+	zbar.NewScanner()
 	qr := must(qrcode.NewWith("Hello, world"))
 	buf := bytes.Buffer{}
 	w := standard.NewWithWriter(nopCloser{&buf}, standard.WithBuiltinImageEncoder(standard.PNG_FORMAT))

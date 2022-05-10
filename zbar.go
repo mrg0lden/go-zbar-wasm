@@ -8,24 +8,25 @@ import (
 	_ "embed"
 
 	"github.com/tetratelabs/wazero"
+	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/wasi"
 )
 
 var (
 	//go:embed zbar.wasm
-	zbarWasm     []byte
-	zbarCompiled wazero.CompiledModule
-	ctx          = context.Background()
-	r            = wazero.NewRuntimeWithConfig(wazero.NewRuntimeConfigJIT())
-	pool         = sync.Pool{New: func() any { return NewScanner() }}
+	zbarWasm []byte
+	ctx      = context.Background()
+	pool     = sync.Pool{New: func() any { return NewScanner() }}
 )
 
-func init() {
+func newZbarInstance() api.Module {
+	r := wazero.NewRuntimeWithConfig(wazero.NewRuntimeConfigJIT())
 	must(wasi.InstantiateSnapshotPreview1(ctx, r))
 	must(r.NewModuleBuilder("env").
 		ExportFunction("emscripten_notify_memory_growth", func(int32) {}).
 		Instantiate(ctx))
-	zbarCompiled = must(r.CompileModule(ctx, zbarWasm, wazero.NewCompileConfig()))
+	zbar := must(r.InstantiateModuleFromCode(ctx, zbarWasm))
+	return zbar
 }
 
 func ReadAll(img image.Image) ([][]byte, error) {

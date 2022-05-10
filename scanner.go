@@ -6,7 +6,6 @@ import (
 	"io"
 	"runtime"
 
-	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
 	"golang.org/x/exp/slices"
 )
@@ -27,7 +26,7 @@ func NewScanner() *Scanner {
 
 func NewScannerWithConfig(cfg map[SymbolType][]ScannerConfig) *Scanner {
 
-	zbar := must(r.InstantiateModule(ctx, zbarCompiled, wazero.NewModuleConfig()))
+	zbar := newZbarInstance()
 
 	res := must(zbar.ExportedFunction("ImageScanner_create").
 		Call(ctx))
