@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/tetratelabs/wazero/api"
+	"golang.org/x/exp/slices"
 )
 
 type Scanner struct {
@@ -52,27 +53,26 @@ func (s *Scanner) SetConfig(t SymbolType, cfg ScannerConfig) {
 }
 
 func (s *Scanner) ReadAll(img image.Image) ([][]byte, error) {
-	r, err := s.Reader(img)
+	zbarImg := s.createImage(img)
+
+	err := s.scan(zbarImg)
 	if err != nil {
 		return nil, err
 	}
 
-	defer r.Close()
-
 	data := [][]byte{}
+	symbol, next := s.getSymbols(zbarImg)
 
-	for r.Next() {
-		b, err := io.ReadAll(r)
-		if err != nil {
-			return nil, err
-		}
-
-		data = append(data, b)
+	for next {
+		data = append(data, slices.Clone(symbol.readAll()))
+		symbol, next = symbol.next()
 	}
 
 	return data, nil
 
 }
+
+var ErrNoSymbolsFound = errors.New("zbar: no symbols were found")
 
 func (s *Scanner) Reader(img image.Image) (*Reader, error) {
 	zbarImg := s.createImage(img)
@@ -82,10 +82,14 @@ func (s *Scanner) Reader(img image.Image) (*Reader, error) {
 		return nil, err
 	}
 
-	symbols := s.getSymbols(zbarImg)
+	symbol, ok := s.getSymbols(zbarImg)
+
+	if !ok {
+		return nil, ErrNoSymbolsFound
+	}
 
 	return &Reader{
-		s:   symbols,
+		s:   symbol,
 		mod: s.mod,
 		img: zbarImg,
 	}, nil
@@ -142,10 +146,17 @@ func (s *Scanner) malloc(size uint32) uint32 {
 	return uint32(res[0])
 }
 
-func (s *Scanner) getSymbols(i img) symbol {
+func (s *Scanner) getSymbols(i img) (symbol, bool) {
 	res := must(s.mod.ExportedFunction("Image_get_symbols").
 		Call(ctx, uint64(i.ptr)))
-	return newSymbol(uint32(res[0]), s.mod.Memory())
+
+	if res[0] == 0 {
+		return symbol{}, false
+	}
+
+	res = must(s.mod.ExportedFunction("SymbolSet_get_first").
+		Call(ctx, res[0]))
+	return newSymbol(uint32(res[0]), s.mod), true
 }
 
 func (s *Scanner) destroy() {
@@ -188,7 +199,7 @@ type Reader struct {
 // len(b) MUST NOT be larger than math.MaxUint32,
 // otherwise unexpected behavior may occur.
 func (r *Reader) Read(b []byte) (int, error) {
-	if r.s.ptr32 == 0 {
+	if r.s.ptr == 0 {
 		return 0, io.EOF
 	}
 
