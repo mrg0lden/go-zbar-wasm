@@ -6,12 +6,14 @@ import (
 	"io"
 	"runtime"
 
+	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
 	"golang.org/x/exp/slices"
 )
 
 type Scanner struct {
 	mod     api.Module
+	rt      wazero.Runtime
 	scanner uint32
 }
 
@@ -26,13 +28,14 @@ func NewScanner() *Scanner {
 
 func NewScannerWithConfig(cfg map[SymbolType][]ScannerConfig) *Scanner {
 
-	zbar := newZbarInstance()
+	rt, zbar := newZbarInstance()
 
 	res := must(zbar.ExportedFunction("ImageScanner_create").
 		Call(ctx))
 
 	s := Scanner{
 		mod:     zbar,
+		rt:      rt,
 		scanner: uint32(res[0]),
 	}
 
@@ -165,6 +168,7 @@ func (s *Scanner) getSymbols(i img) (symbol, bool) {
 func (s *Scanner) destroy() {
 	s.mod.ExportedFunction("ImageScanner_destory").
 		Call(ctx, uint64(s.scanner))
+	s.rt.Close(ctx)
 }
 
 // panics if img is nil

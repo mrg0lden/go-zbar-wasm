@@ -19,14 +19,14 @@ var (
 	pool     = sync.Pool{New: func() any { return NewScanner() }}
 )
 
-func newZbarInstance() api.Module {
+func newZbarInstance() (wazero.Runtime, api.Module) {
 	r := wazero.NewRuntimeWithConfig(wazero.NewRuntimeConfigJIT())
 	must(wasi.InstantiateSnapshotPreview1(ctx, r))
 	must(r.NewModuleBuilder("env").
 		ExportFunction("emscripten_notify_memory_growth", func(int32) {}).
 		Instantiate(ctx))
 	zbar := must(r.InstantiateModuleFromCode(ctx, zbarWasm))
-	return zbar
+	return r, zbar
 }
 
 func ReadAll(img image.Image) ([][]byte, error) {
