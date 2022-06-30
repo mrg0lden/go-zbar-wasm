@@ -9,7 +9,7 @@ import (
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
-	"github.com/tetratelabs/wazero/wasi"
+	"github.com/tetratelabs/wazero/wasi_snapshot_preview1"
 )
 
 var (
@@ -20,12 +20,13 @@ var (
 )
 
 func newZbarInstance() (wazero.Runtime, api.Module) {
-	r := wazero.NewRuntimeWithConfig(wazero.NewRuntimeConfigJIT())
-	must(wasi.InstantiateSnapshotPreview1(ctx, r))
+	r := wazero.NewRuntimeWithConfig(wazero.NewRuntimeConfigCompiler())
+	must(wasi_snapshot_preview1.Instantiate(ctx, r))
+	// TODO: replace with wazero impl after https://github.com/tetratelabs/wazero/issues/601
 	must(r.NewModuleBuilder("env").
 		ExportFunction("emscripten_notify_memory_growth", func(int32) {}).
-		Instantiate(ctx))
-	zbar := must(r.InstantiateModuleFromCode(ctx, zbarWasm))
+		Instantiate(ctx, r))
+	zbar := must(r.InstantiateModuleFromBinary(ctx, zbarWasm))
 	return r, zbar
 }
 
