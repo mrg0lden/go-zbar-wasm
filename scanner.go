@@ -23,7 +23,9 @@ type ScannerConfig struct {
 }
 
 func NewScanner() *Scanner {
-	return NewScannerWithConfig(nil)
+	return NewScannerWithConfig(map[SymbolType][]ScannerConfig{
+		SymbolType_QRCODE: {ScannerConfig{Config: Config_EMIT_CHECK, Value: 0}},
+	})
 }
 
 func NewScannerWithConfig(cfg map[SymbolType][]ScannerConfig) *Scanner {
