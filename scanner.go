@@ -22,13 +22,23 @@ type ScannerConfig struct {
 	Value  int32
 }
 
+var (
+	ErrNoSymbolsFound    = errors.New("zbar: no symbols were found")
+	ErrFailedToSetConfig = errors.New("zbar: failed to set config")
+)
+
 func NewScanner() *Scanner {
-	return NewScannerWithConfig(map[SymbolType][]ScannerConfig{
-		SymbolType_QRCODE: {ScannerConfig{Config: Config_EMIT_CHECK, Value: 0}},
-	})
+	return must(NewScannerWithConfig(map[SymbolType][]ScannerConfig{
+		SymbolType_QRCODE: {
+			ScannerConfig{Config_ENABLE, 1},
+			ScannerConfig{Config_ADD_CHECK, 1},
+			ScannerConfig{Config_EMIT_CHECK, 0},
+			ScannerConfig{Config_BINARY, 1},
+		},
+	}))
 }
 
-func NewScannerWithConfig(cfg map[SymbolType][]ScannerConfig) *Scanner {
+func NewScannerWithConfig(cfg map[SymbolType][]ScannerConfig) (*Scanner, error) {
 
 	rt, zbar := newZbarInstance()
 
@@ -41,20 +51,35 @@ func NewScannerWithConfig(cfg map[SymbolType][]ScannerConfig) *Scanner {
 		scanner: uint32(res[0]),
 	}
 
+	defer runtime.SetFinalizer(&s, (*Scanner).destroy)
+
+	var err error
+
 	for t, cfgs := range cfg {
 		for _, cfg := range cfgs {
-			s.SetConfig(t, cfg)
+			err = s.SetConfig(t, cfg)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	runtime.SetFinalizer(&s, (*Scanner).destroy)
-
-	return &s
+	return &s, nil
 }
 
-func (s *Scanner) SetConfig(t SymbolType, cfg ScannerConfig) {
-	s.mod.ExportedFunction("ImageScanner_set_config").
-		Call(ctx, uint64(t), uint64(cfg.Config), uint64(cfg.Value))
+func (s *Scanner) SetConfig(t SymbolType, cfg ScannerConfig) error {
+	res, err := s.mod.ExportedFunction("ImageScanner_set_config").
+		Call(ctx, uint64(s.scanner), uint64(t), uint64(cfg.Config), uint64(cfg.Value))
+
+	if err != nil {
+		return err
+	}
+
+	if res[0] != 0 {
+		return ErrFailedToSetConfig
+	}
+
+	return nil
 }
 
 func (s *Scanner) ReadAll(img image.Image) ([][]byte, error) {
@@ -79,8 +104,6 @@ func (s *Scanner) ReadAll(img image.Image) ([][]byte, error) {
 	return data, nil
 
 }
-
-var ErrNoSymbolsFound = errors.New("zbar: no symbols were found")
 
 func (s *Scanner) Reader(img image.Image) (*Reader, error) {
 	zbarImg := s.createImage(img)

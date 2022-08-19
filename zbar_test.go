@@ -2,6 +2,7 @@ package zbar_test
 
 import (
 	"bytes"
+	"crypto/rand"
 	"image/png"
 	"io"
 	"testing"
@@ -28,11 +29,20 @@ func (nopCloser) Close() error {
 	return nil
 }
 
+var random = make([]byte, 32)
+
 func Test_E2E(t *testing.T) {
 	zbar.NewScanner()
 	zbar.NewScanner()
 	zbar.NewScanner()
-	qr := must(qrcode.NewWith("Hello, world"))
+
+	io.ReadFull(rand.Reader, random)
+
+	qr := must(
+		qrcode.NewWith(string(random),
+			qrcode.WithEncodingMode(qrcode.EncModeByte),
+			qrcode.WithErrorCorrectionLevel(qrcode.ErrorCorrectionHighest),
+		))
 	buf := bytes.Buffer{}
 	w := standard.NewWithWriter(nopCloser{&buf}, standard.WithBuiltinImageEncoder(standard.PNG_FORMAT))
 	qr.Save(w)
@@ -41,7 +51,7 @@ func Test_E2E(t *testing.T) {
 
 	res, err := zbar.ReadAll(img)
 	assert.NoError(t, err)
-	assert.Equal(t, []byte("Hello, world"), res[0])
+	assert.Equal(t, []byte(random), res[0])
 
 	res = [][]byte{{}}
 	r, err := zbar.Read(img)
@@ -53,6 +63,6 @@ func Test_E2E(t *testing.T) {
 	}
 
 	assert.NoError(t, err)
-	assert.Equal(t, [][]byte{[]byte("Hello, world")}, res)
+	assert.Equal(t, [][]byte{[]byte(random)}, res)
 
 }
