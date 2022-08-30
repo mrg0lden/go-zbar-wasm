@@ -23,7 +23,6 @@ var (
 func newZbarInstance() (wazero.Runtime, api.Module) {
 	r := wazero.NewRuntime(ctx)
 	must(wasi_snapshot_preview1.Instantiate(ctx, r))
-	// TODO: replace with wazero impl after https://github.com/tetratelabs/wazero/issues/601
 
 	must(emscripten.Instantiate(ctx, r))
 
