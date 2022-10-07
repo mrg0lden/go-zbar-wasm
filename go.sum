@@ -16,6 +16,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/tetratelabs/wazero v1.0.0-beta.2 h1:Qa1R1oizAYHcmy8PljgINdXUZ/nRQkxUBbYfGSb4IBE=
 github.com/tetratelabs/wazero v1.0.0-beta.2/go.mod h1:CD5smBN5rGZo7UNe8aUiWyYE3bDWED/CQSonog9NSEg=
+github.com/tetratelabs/wazero v1.0.0-pre.2 h1:sHYi8DKUL7s7c4sKz6lw0pNqky5EogYK0Iq4pSIsDog=
+github.com/tetratelabs/wazero v1.0.0-pre.2/go.mod h1:M8UDNECGm/HVjOfq0EOe4QfCY9Les1eq54IChMLETbc=
 github.com/yeqown/go-qrcode/v2 v2.2.1 h1:Jc1Q916fwC05R8C7mpWDbrT9tyLPaLLKDABoC5XBCe8=
 github.com/yeqown/go-qrcode/v2 v2.2.1/go.mod h1:2Qsk2APUCPne0TsRo40DIkI5MYnbzYKCnKGEFWrxd24=
 github.com/yeqown/go-qrcode/writer/standard v1.2.1 h1:FMRZiur5yApUIe4fqtqmcdl/XQTZAZWt2DhkPx4VIW0=
