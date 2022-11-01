@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/alecthomas/assert/v2 v2.0.2
-	github.com/tetratelabs/wazero v1.0.0-pre.2
+	github.com/tetratelabs/wazero v1.0.0-pre.3
 	github.com/yeqown/go-qrcode/v2 v2.2.1
 	github.com/yeqown/go-qrcode/writer/standard v1.2.1
 	golang.org/x/exp v0.0.0-20220827204233-334a2380cb91
