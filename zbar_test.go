@@ -51,7 +51,7 @@ func Test_E2E(t *testing.T) {
 
 	res, err := zbar.ReadAll(img)
 	assert.NoError(t, err)
-	assert.Equal(t, []byte(random), res[0])
+	assert.Equal(t, random, res[0])
 
 	res = [][]byte{{}}
 	r, err := zbar.Read(img)
@@ -63,6 +63,6 @@ func Test_E2E(t *testing.T) {
 	}
 
 	assert.NoError(t, err)
-	assert.Equal(t, [][]byte{[]byte(random)}, res)
+	assert.Equal(t, [][]byte{random}, res)
 
 }
