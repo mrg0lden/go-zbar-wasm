@@ -28,18 +28,18 @@ func newSymbol(ptr uint32, zbar api.Module) symbol {
 
 func (s *symbol) read(b []byte, offset uint32) (uint32, bool) {
 	if offset+uint32(len(b)) < s.len {
-		b2, _ := s.mod.Memory().Read(ctx, s.data+offset, uint32(len(b)))
+		b2, _ := s.mod.Memory().Read(s.data+offset, uint32(len(b)))
 		copy(b, b2)
 		return uint32(len(b)), true
 	}
 
-	b2, _ := s.mod.Memory().Read(ctx, s.data+offset, s.len-offset)
+	b2, _ := s.mod.Memory().Read(s.data+offset, s.len-offset)
 	copy(b, b2)
 	return s.len - offset, false
 }
 
 func (s *symbol) readAll() []byte {
-	b, ok := s.mod.Memory().Read(ctx, s.data, s.len)
+	b, ok := s.mod.Memory().Read(s.data, s.len)
 	if !ok {
 		return nil
 	}

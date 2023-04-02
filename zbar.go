@@ -25,7 +25,7 @@ func newZbarInstance() (wazero.Runtime, api.Module) {
 	wasi_snapshot_preview1.MustInstantiate(ctx, r)
 	emscripten.MustInstantiate(ctx, r)
 
-	zbar := must(r.InstantiateModuleFromBinary(ctx, zbarWasm))
+	zbar := must(r.Instantiate(ctx, zbarWasm))
 	return r, zbar
 }
 

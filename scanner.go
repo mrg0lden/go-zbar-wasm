@@ -90,7 +90,7 @@ func (s *Scanner) ReadAll(img image.Image) ([][]byte, error) {
 		return nil, err
 	}
 
-	data := [][]byte{}
+	var data [][]byte
 	symbol, next := s.getSymbols(zbarImg)
 
 	for next {
@@ -149,9 +149,9 @@ func (s *Scanner) createImage(i image.Image) img {
 
 	switch i := i.(type) {
 	case *image.Gray:
-		s.mod.Memory().Write(ctx, buf, i.Pix)
+		s.mod.Memory().Write(buf, i.Pix)
 	default:
-		s.mod.Memory().Write(ctx, buf, toGray(i).Pix)
+		s.mod.Memory().Write(buf, toGray(i).Pix)
 	}
 
 	var zbarImg img
@@ -224,7 +224,7 @@ type Reader struct {
 // Read reads a symbol into b
 //
 // Make sure not to Call (*Reader).Next() before
-// receiving io.EOF. Otherwise, the remaning data
+// receiving io.EOF. Otherwise, the remaining data
 // will be skipped.
 // The reader may return
 //
