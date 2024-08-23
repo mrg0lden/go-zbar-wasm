@@ -1,9 +1,11 @@
 package zbar
 
 import (
+	"bytes"
 	"errors"
 	"image"
 	"io"
+	"iter"
 	"runtime"
 
 	"github.com/tetratelabs/wazero"
@@ -39,7 +41,6 @@ func NewScanner() *Scanner {
 }
 
 func NewScannerWithConfig(cfg map[SymbolType][]ScannerConfig) (*Scanner, error) {
-
 	rt, zbar := newZbarInstance()
 
 	res := must(zbar.ExportedFunction("ImageScanner_create").
@@ -70,7 +71,6 @@ func NewScannerWithConfig(cfg map[SymbolType][]ScannerConfig) (*Scanner, error) 
 func (s *Scanner) SetConfig(t SymbolType, cfg ScannerConfig) error {
 	res, err := s.mod.ExportedFunction("ImageScanner_set_config").
 		Call(ctx, uint64(s.scanner), uint64(t), uint64(cfg.Config), uint64(cfg.Value))
-
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,6 @@ func (s *Scanner) ReadAll(img image.Image) ([][]byte, error) {
 		Call(ctx, uint64(zbarImg.ptr))
 
 	return data, nil
-
 }
 
 func (s *Scanner) Reader(img image.Image) (*Reader, error) {
@@ -124,7 +123,6 @@ func (s *Scanner) Reader(img image.Image) (*Reader, error) {
 		mod: s.mod,
 		img: zbarImg,
 	}, nil
-
 }
 
 func (s *Scanner) scan(i img) error {
@@ -142,7 +140,6 @@ func (s *Scanner) scan(i img) error {
 }
 
 func (s *Scanner) createImage(i image.Image) img {
-
 	bounds := i.Bounds()
 
 	buf := s.malloc(uint32(bounds.Dx() * bounds.Dy()))
@@ -263,4 +260,32 @@ func (r *Reader) Close() error {
 		Call(ctx, uint64(r.img.ptr))
 	r.img.ptr = 0
 	return nil
+}
+
+// Iter returns a go 1.23 iterator reusing
+// a single buffer for all symbols.
+func (r *Reader) Iter() iter.Seq2[[]byte, error] {
+	var (
+		// default io.Copy buffer size
+		copyBuf = make([]byte, 32*1024)
+		buf     = bytes.Buffer{}
+	)
+
+	return func(yield func([]byte, error) bool) {
+		defer r.Close()
+
+		for {
+			_, err := io.CopyBuffer(&buf, r, copyBuf)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+
+			if !yield(buf.Bytes(), nil) || !r.Next() {
+				return
+			}
+
+			buf.Reset()
+		}
+	}
 }
