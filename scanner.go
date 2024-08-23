@@ -281,6 +281,10 @@ func (r *Reader) Iter() iter.Seq2[[]byte, error] {
 				return
 			}
 
+			if buf.Len() == 0 {
+				return
+			}
+
 			if !yield(buf.Bytes(), nil) || !r.Next() {
 				return
 			}
